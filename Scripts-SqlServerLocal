@@ -1,0 +1,50 @@
+create database thona_test_jcgl;
+use thona_test_jcgl;
+
+/*
+create table usuarios_thona_test(
+numUsuario int primary key identity (1,1)
+,usuario varchar(100) not null
+,contrasenia varchar(100) not null
+,fechaAlta datetime not null
+,fechaBaja datetime 
+)
+*/
+--drop table usuarios_thona_test;
+
+select * from usuarios_thona_test;
+
+/*
+insert into usuarios_thona_test (usuario, contrasenia, fechaAlta, fechaBaja)
+values('JuanAntonio','admin123',DATEADD(DAY, -3, GETDATE()), null)
+*/
+
+/* Crear tablas estatus y tareas */
+
+--create table EstatusTareas_thona_test(
+--IdEstatusTarea int primary key identity (1,1)
+--,Descripcion varchar(200) not null
+--,fechaAlta datetime not null
+--)
+--insert into EstatusTareas_thona_test (Descripcion,fechaAlta)
+--values
+--('PENDIENTE',GETDATE()),
+--('EN PROCESO',GETDATE()),
+--('FINALIZADO',GETDATE())
+
+SELECT * FROM EstatusTareas_thona_test;
+
+--create table Tareas_thona_test(
+--IdTask int primary key identity (1,1)
+--,tituloTask varchar(100) not null
+--,fechaAsignacion datetime not null
+--,fechaVencimiento datetime 
+--,IdEstatusTarea int not null
+--,FOREIGN KEY (IdEstatusTarea) REFERENCES EstatusTareas_thona_test(IdEstatusTarea)
+--)
+SELECT * FROM Tareas_thona_test;
+
+--insert into Tareas_thona_test (tituloTask,fechaAsignacion,fechaVencimiento,IdEstatusTarea)
+--values
+--('Entregar test tecnico',DATEADD(DAY, -4, GETDATE()),DATEADD(DAY, 1, GETDATE()), 1)
+--,('cambiar tabla beneficiarios',DATEADD(DAY, -10, GETDATE()),DATEADD(DAY, 7, GETDATE()), 2)
