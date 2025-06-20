@@ -26,7 +26,7 @@ Este proyecto es una aplicación web desarrollada con ASP.NET MVC (.NET Framewor
 ## Uso
 
 1. Clona el repositorio:
-git clone https://github.com/usuario/gestor-tareas.git
+git clone git@github.com:Carlos810/Login_TaskManager.git
 2. Configura tu cadena de conexión en `web.config`.
 
 3. Ejecuta la solución en Visual Studio.
