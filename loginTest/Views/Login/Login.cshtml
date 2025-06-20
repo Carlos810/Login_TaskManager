@@ -1,0 +1,100 @@
+﻿
+@{
+    Layout = null;
+    ViewBag.Title = "Login";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(to bottom, #ffb347, #ffffff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .subtitle {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        input.form-control {
+            border-radius: 4px;
+        }
+
+        button {
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+        #errorMsg{
+            color:blueviolet
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="subtitle">Bienvenido, ingresa tus credenciales</div>
+        <div id="errorMsg" class="error-msg"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <input type="text" id="usuario" class="form-control" placeholder="Usuario" required />
+            </div>
+            <div class="form-group">
+                <input type="password" id="contrasenia" class="form-control" placeholder="Contraseña" required />
+            </div>
+            <button id="btnLogin" type="button" class="btn btn-primary btn-block">Ingresar</button>
+        </form>
+    </div>
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+</body>
+</html>
+<script>
+$(function () {
+    $('#btnLogin').click(function (e) {
+        e.preventDefault();
+        let credentials = { usuario: $("#usuario").val(), contrasenia: $("#contrasenia").val() };
+
+        $.ajax({
+            url: '@Url.Action("Login", "Login")',
+            type: 'POST',
+            data: credentials,
+            success: function (response) {
+                if (response.success) {
+                    window.location.href = response.redirectUrl;
+                } else {
+                    $('#errorMsg').text(response.message).show();
+                }
+            },
+            error: function () {
+                $('#errorMsg').text('Error del servidor').show();
+            }
+        });
+
+
+    });
+});
+</script>

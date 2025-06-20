@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Mi aplicación ASP.NET</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <link href="~/Scripts/dataTablePlugin/datatables.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
+        <div class="container">
+            @Html.ActionLink("Gestiona tus tareas", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Alternar navegación" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+    </nav>
+    <div class="container body-content">
+        @RenderBody()
+
+    </div>
+
+    <div class="modal fade" id="modalTarea" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitulo">Editar Tarea</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="mensajeConfirmacion" class="alert alert-warning d-none"></div>
+
+                    <input type="hidden" id="tareaId">
+
+                    <label for="tituloTarea" class="form-label">Título:</label>
+                    <input type="text" id="tituloTarea" class="form-control mb-1" placeholder="Título">
+                    <div id="errorEditarTitulo" class="text-danger small mb-2 d-none"></div>
+
+                    <label for="fechaVencimiento" class="form-label">Fecha Vencimiento:</label>
+                    <input type="date" id="fechaVencimiento" class="form-control mb-1">
+                    <div id="errorEditarFecha" class="text-danger small mb-2 d-none"></div>
+
+                    <label for="estatusTarea" class="form-label">Estatus:</label>
+                    <select id="estatusTarea" class="form-select">
+                        <option value="1">Pendiente</option>
+                        <option value="2">En proceso</option>
+                        <option value="3">Completada</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-success" id="btnGuardarCambios">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="modalAgregarTarea" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Agregar Tarea</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <label for="nuevoTitulo">Título:</label>
+                    <input type="text" id="nuevoTitulo" class="form-control mb-1" required>
+                    <div id="errorTitulo" class="text-danger small mb-2 d-none"></div>
+
+                    <label for="nuevaFechaAsignacion">Fecha Asignación:</label>
+                    <input type="date" id="nuevaFechaAsignacion" class="form-control mb-1" required>
+                    <div id="errorFechaAsignacion" class="text-danger small mb-2 d-none"></div>
+
+                    <label for="nuevaFechaVencimiento">Fecha Vencimiento:</label>
+                    <input type="date" id="nuevaFechaVencimiento" class="form-control mb-1" required>
+                    <div id="errorFechaVencimiento" class="text-danger small mb-2 d-none"></div>
+
+                    <label for="nuevoEstatus">Estatus:</label>
+                    <select id="nuevoEstatus" class="form-select mb-1" required>
+                        <option value="">Seleccione una opción</option>
+                        <option value="1">Pendiente</option>
+                        <option value="2">En proceso</option>
+                        <option value="3">Completada</option>
+                    </select>
+                    <div id="errorEstatus" class="text-danger small mb-2 d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" id="btnGuardarNuevaTarea">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @*@Scripts.Render("~/bundles/jquery")*@
+    <script src="~/Scripts/jquery-3.7.0.js"></script>
+    @Scripts.Render("~/bundles/bootstrap")
+    @RenderSection("scripts", required: false)
+    <script src="~/Scripts/dataTablePlugin/datatables.min.js"></script>
+    <script>
+        $(document).ready(function () {
+          $('#tablaTareas').DataTable({
+            ajax: {
+              url: '@Url.Action("ObtenerTareas", "Home")',
+              dataSrc: ''
+            },
+              columns: [
+                  { data: 'Titulo' },
+                  {
+                      data: 'FechaAsignacion',
+                      render: function (data) {
+                          return `<input type="date" class="form-control" value="${data}" disabled>`;
+                      }
+                  },
+                  {
+                      data: 'FechaVencimiento',
+                      render: function (data) {
+                          const min = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+                          return `<input type="date" class="form-control" value="${data}" min="${min}" disabled>`;
+                      }
+                  },
+                  {
+                      data: 'EstatusTarea',
+                      render: function (data, type, row) {
+                          const options = {
+                              1: 'Pendiente',
+                              2: 'En proceso',
+                              3: 'Completada'
+                          };
+
+                          let select = `<select class="form-select form-select-sm" disabled>`;
+                          for (const [valor, texto] of Object.entries(options)) {
+                              const selected = parseInt(data) === parseInt(valor) ? 'selected' : '';
+                              select += `<option value="${valor}" ${selected}>${texto}</option>`;
+                          }
+                          select += `</select>`;
+
+                          return select;
+                      }
+                  }
+                  ,{
+                      data: 'Id',
+                      render: function (data, type, row) {
+                          return `
+                                <button class="btn btn-sm btn-primary btn-editar" data-id="${data}" title="Editar">
+                                  <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger btn-eliminar" data-id="${data}" title="Eliminar">
+                                  <i class="fas fa-trash-alt"></i>
+                                </button>
+                              `;
+                      }
+                  }
+              ]
+          });
+        });
+
+        $(document).on('click', '.btn-editar', function () {
+            const fila = $('#tablaTareas').DataTable().row($(this).closest('tr')).data();
+            $('#modalTitulo').text('Editar Tarea');
+            $('#mensajeConfirmacion').addClass('d-none');
+            $('#tareaId').val(fila.Id);
+            $('#tituloTarea').val(fila.Titulo).prop('disabled', false);
+            $('#fechaVencimiento').val(fila.FechaVencimiento).prop('disabled', false);
+            $('#estatusTarea').val(fila.EstatusTarea).prop('disabled', false);
+            $('#btnGuardarCambios').data('accion', 'editar');
+            $('#modalTarea').modal('show');
+        });
+
+        $(document).on('click', '.btn-eliminar', function () {
+            const fila = $('#tablaTareas').DataTable().row($(this).closest('tr')).data();
+            $('#modalTitulo').text('Eliminar Tarea');
+            $('#mensajeConfirmacion').removeClass('d-none').text('¿Seguro deseas eliminar el siguiente registro?');
+            $('#tareaId').val(fila.Id);
+            $('#tituloTarea').val(fila.Titulo).prop('disabled', true);
+            $('#fechaVencimiento').val(fila.FechaVencimiento).prop('disabled', true);
+            $('#estatusTarea').val(fila.EstatusTarea).prop('disabled', true);
+            $('#btnGuardarCambios').data('accion', 'eliminar');
+            $('#modalTarea').modal('show');
+        });
+
+        $('#btnGuardarCambios').on('click', function () {
+          let esValido = true;
+
+          $('#tituloTarea').removeClass('is-invalid');
+          $('#errorEditarTitulo').addClass('d-none').text('');
+
+          $('#fechaVencimiento').removeClass('is-invalid');
+          $('#errorEditarFecha').addClass('d-none').text('');
+
+          const titulo = $('#tituloTarea').val().trim();
+          const fechaVencimiento = $('#fechaVencimiento').val();
+          const hoy = new Date().toISOString().split('T')[0];
+
+          if (!titulo) {
+            $('#tituloTarea').addClass('is-invalid');
+            $('#errorEditarTitulo').removeClass('d-none').text('El título no puede estar vacío.');
+            esValido = false;
+          }
+
+          if (!fechaVencimiento) {
+            $('#fechaVencimiento').addClass('is-invalid');
+            $('#errorEditarFecha').removeClass('d-none').text('Seleccione una fecha.');
+            esValido = false;
+          } else if (fechaVencimiento <= hoy) {
+            $('#fechaVencimiento').addClass('is-invalid');
+            $('#errorEditarFecha').removeClass('d-none').text('La fecha debe ser mayor al día actual.');
+            esValido = false;
+          }
+
+          if (!esValido) return;
+
+          const data = {
+            Id: $('#tareaId').val(),
+            Titulo: titulo,
+            FechaVencimiento: fechaVencimiento,
+            EstatusTarea: $('#estatusTarea').val()
+          };
+
+          $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Editar", "Home")',
+            data:data,
+            success: function (resultado) {
+                if (resultado.success) {
+                $('#modalTarea').modal('hide');
+                $('#tablaTareas').DataTable().ajax.reload();
+              } else {
+                alert('No se pudo editar la tarea.');
+              }
+            },
+            error: function () {
+              alert('Error al intentar editar.');
+            }
+          });
+        });
+
+       $('#btnGuardarNuevaTarea').on('click', function () {
+          let esValido = true;
+
+          $('.form-control, .form-select').removeClass('is-invalid');
+          $('.text-danger').addClass('d-none').text('');
+
+          const titulo = $('#nuevoTitulo').val().trim();
+          const fechaAsignacion = $('#nuevaFechaAsignacion').val();
+          const fechaVencimiento = $('#nuevaFechaVencimiento').val();
+          const estatus = $('#nuevoEstatus').val();
+          const hoy = new Date().toISOString().split('T')[0];
+
+          if (!titulo) {
+            $('#nuevoTitulo').addClass('is-invalid');
+            $('#errorTitulo').removeClass('d-none').text('Ingrese un título.');
+            esValido = false;
+          }
+
+          if (!fechaAsignacion) {
+            $('#nuevaFechaAsignacion').addClass('is-invalid');
+            $('#errorFechaAsignacion').removeClass('d-none').text('Seleccione una fecha de asignación.');
+            esValido = false;
+          }
+
+          if (!fechaVencimiento) {
+            $('#nuevaFechaVencimiento').addClass('is-invalid');
+            $('#errorFechaVencimiento').removeClass('d-none').text('Seleccione una fecha de vencimiento.');
+            esValido = false;
+          } else {
+            if (fechaVencimiento <= fechaAsignacion) {
+              $('#nuevaFechaVencimiento').addClass('is-invalid');
+              $('#errorFechaVencimiento').removeClass('d-none').text('Debe ser posterior a la fecha de asignación.');
+              esValido = false;
+            } else if (fechaVencimiento <= hoy) {
+              $('#nuevaFechaVencimiento').addClass('is-invalid');
+              $('#errorFechaVencimiento').removeClass('d-none').text('Debe ser mayor a la fecha actual.');
+              esValido = false;
+            }
+          }
+
+          if (!estatus) {
+            $('#nuevoEstatus').addClass('is-invalid');
+            $('#errorEstatus').removeClass('d-none').text('Seleccione un estatus.');
+            esValido = false;
+          }
+
+          if (!esValido) return;
+
+          const data = {
+            Titulo: titulo,
+            FechaAsignacion: fechaAsignacion,
+            FechaVencimiento: fechaVencimiento,
+            EstatusTarea: estatus
+          };
+
+          $.ajax({
+            type: 'POST',
+            url: '@Url.Action("Agregar", "Home")',
+            data: data,
+            success: function (resultado) {
+                if (resultado.success) {
+                $('#modalAgregarTarea').modal('hide');
+                $('#tablaTareas').DataTable().ajax.reload();
+              } else {
+                alert('No se pudo agregar la tarea.');
+              }
+            },
+            error: function () {
+              alert('Error al enviar los datos al servidor.');
+            }
+          });
+        });
+
+        $('#btnMostrarModalAgregar').on('click', function () {
+            const hoy = new Date();
+            const hoyISO = hoy.toISOString().split('T')[0];
+
+            $('#nuevaFechaAsignacion').val(hoyISO);
+            $('#nuevaFechaVencimiento').val('');
+            $('#nuevaFechaVencimiento').attr('min', getFechaOffset(hoyISO, 1));
+
+            $('#modalAgregarTarea').modal('show');
+        });
+
+        // cuando cambia la fecha de asignación
+        $('#nuevaFechaAsignacion').on('change', function () {
+            const nueva = $(this).val();
+            $('#nuevaFechaVencimiento').attr('min', getFechaOffset(nueva, 1));
+        });
+
+        function getFechaOffset(fechaBase, diasOffset) {
+            const base = new Date(fechaBase);
+            base.setDate(base.getDate() + diasOffset);
+            return base.toISOString().split('T')[0];
+        }
+    </script>
+</body>
+</html>
